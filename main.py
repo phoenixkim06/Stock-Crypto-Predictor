@@ -31,8 +31,6 @@ def predictCrypto(choice, crypto_currency, future_day, start):
 
     #using 60 days to predict
     prediction_days = 60
-    #predicting 30 days into the future
-    #future_day = 30
     global x_train
     global y_train
     x_train, y_train = [], []
@@ -59,18 +57,14 @@ def predictCrypto(choice, crypto_currency, future_day, start):
     #Testing the model
     test_start = dt.datetime(2020, 1, 1)
     test_end = dt.datetime.now()
-    
+
     #determines what data to choose depending on whether the user chooses to predict crypto or stock prices
     if choice == "1":
         test_data = web.DataReader(f'{crypto_currency}-{against_currency}', 'yahoo', test_start, test_end)
         actual_values = test_data['Close'].values
-        # today_data = web.DataReader(f'{crypto_currency}-{against_currency}', 'yahoo', test_start, test_today_end)
-        # today_values = today_data['Close'].values
     else:
         test_data = web.DataReader(crypto_currency, 'yahoo', test_start, test_end)
         actual_values = test_data['Close'].values
-        # today_data = web.DataReader(crypto_currency, 'yahoo', test_start, test_today_end)
-        # today_values = today_data['Close'].values
 
     total_dataset = pd.concat((data['Close'], test_data['Close']), axis=0)
 
