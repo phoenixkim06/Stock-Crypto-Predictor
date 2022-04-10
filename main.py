@@ -3,19 +3,27 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pandas_datareader as web
 import datetime as dt
+import tkinter as tk
+from tkinter import *
+from tkinter import ttk
+r = tk.Tk()
+#Basic Formatting + Title
+r.title("Stock/Crypto Prediction")
+r.geometry("350x550")
+r.configure(bg="#222222")
+r.resizable(0, 0)
 
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 
-def predictCrypto(choice, crypto_currency, future_day, start):
+#function that takes in the inputs and returns prediction
+def predictCrypto(choice, crypto_currency, future_day, start = dt.datetime(2016, 1, 1)):
     future_day = int((float(future_day)))
     against_currency = 'USD'
 
     #start/end date
-    start = dt.datetime(2016, 1, 1)
     end = dt.datetime.now()
-
     #pull data off of the web
     #                     #crypto, #source, #start, #end
     #check if it is doing it for a stock or crypto
@@ -35,6 +43,7 @@ def predictCrypto(choice, crypto_currency, future_day, start):
     global y_train
     x_train, y_train = [], []
 
+    #get all of the stock prices
     for x in range(prediction_days, len(scaled_data) - future_day):
         x_train.append(scaled_data[x-prediction_days:x, 0])
         y_train.append(scaled_data[x + future_day, 0])
@@ -82,6 +91,7 @@ def predictCrypto(choice, crypto_currency, future_day, start):
     prediction = model.predict(x_test)
     prediction = scaler.inverse_transform(prediction)
 
+    #graph formatting
     plt.plot(actual_values, color = 'black', label = 'Actual Values')
     plt.plot(prediction, color = 'green', label = 'Prediction')
     plt.title(f'{crypto_currency}-{against_currency}')
@@ -99,191 +109,212 @@ def predictCrypto(choice, crypto_currency, future_day, start):
     prediction = scaler.inverse_transform(prediction)
 
     #prediction
-    print(f"Prediction price of {crypto_currency}: {prediction}")
+    return prediction
 
-#fucntion that tests whether or not the user inputs are valid or not
-def testing_valid(choice, userChoice, start = dt.datetime(2016, 1, 1), end = dt.datetime.now()):
-    if choice == "1":
-        try:
-            data = web.DataReader(f'{userChoice}-USD', 'yahoo', start, end)
-            return True
-        except:
-            return False
+stockCryptoRadioButton = IntVar()
+#button on whether to select crypto or stock
+#1 = crypto, 2 = stock
+Radiobutton(r, text='Crypto', variable = stockCryptoRadioButton, value = "1", bg = "#222222", fg = "#ff7452", activebackground = "#222222", activeforeground = "#ff7452", command = lambda: printCrypto()).place(x = 0, y = 0)
+Radiobutton(r, text='Stock', variable = stockCryptoRadioButton, value = "2", bg = "#222222", fg = "#ff7452", activebackground = "#222222", activeforeground = "#ff7452", command = lambda: printStocks()).place(x = 65, y = 0)
+
+#button to select whether to choose a default or custom start date
+#1 = default, 2 = custom
+dates = IntVar()
+Radiobutton(r, text='Default Date', variable = dates, value = "1", bg = "#222222", fg = "#c270c0", activebackground = "#222222", activeforeground = "#c270c0", command = lambda: destroyComboBox()).place(x = 0, y = 320)
+Radiobutton(r, text='Custom Date', variable = dates, value = "2", bg = "#222222", fg = "#c270c0", activebackground = "#222222", activeforeground = "#c270c0", command = lambda: displayComboBox()).place(x = 110, y = 320)
+
+#example cryptos/stocks
+cryptoList = "Example Crypto:\n Bitcoin: BTC\n Cardano: ADA\n Ethereum: ETH\n Ripple: XRP\n Litecoin: LTC"
+stockList = "Example Stocks:\n Amazon: AMZN\n Google: GOOGL\n Apple: AAPL\n Tesla: TSLA\n Microsoft: MSFT"
+stockCryptoLabel = Label(r, bg = "#222222", fg = "#abf5d1").place(x = 0, y = 40)
+
+
+#Entry box for the ticker symbol
+Label(r, text = "Enter Ticker Symbol:", bg = "#222222", fg = "#028fa3").place(x = 0, y = 180)
+stockCryptoEntry = StringVar(r)
+Entry(r, width = 35, textvariable = stockCryptoEntry, bg = "#222222", fg = "#d9e2ec").place(x = 3, y = 200)
+
+#Entry box for the # of days in the future to predict
+Label(r, text = "Enter # of Days Into the Future to Predict:", bg = "#222222", fg = "#028fa3").place(x = 0, y = 240)
+numberOfFutureDays = StringVar(r)
+Entry(r, width = 35, textvariable = numberOfFutureDays, bg = "#222222", fg = "#d9e2ec").place(x = 3, y = 260)
+Label(r, text = "Choose a Data Colletion Start Date:", bg = "#222222", fg = "#ffab00").place(x = 0, y = 300)
+#boxes to select custom dates
+comboBOX1 = ttk.Combobox(r)
+comboBOX2 = ttk.Combobox(r)
+comboBOX3 = ttk.Combobox(r)
+#lists with months, years, and days
+months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+years = ["2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022"]
+days = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+        "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
+
+#show custom date boxes
+def displayComboBox():
+    global comboBOX1
+    global comboBOX2
+    global comboBOX3
+    global monthvar
+    global yearvar
+    global dayvar
+    global months
+    monthvar = StringVar(r)
+    yearvar = StringVar(r)
+    dayvar = StringVar(r)
+    #formatting/style of comboboxes
+    style = ttk.Style()
+    style.theme_use('clam')
+    style.configure("TCombobox", fieldbackground = "#222222", background = "#222222", foreground = "#d9e2ec", darkcolor = "#222222", lightcolor = "#222222")
+    #select boxes for custom date
+    comboBOX1 = ttk.Combobox(r, values = months, width = 13, textvariable = monthvar)
+    comboBOX1.set("Pick a Month")
+    comboBOX1.place(x = 3, y = 350)
+    comboBOX2 = ttk.Combobox(r, values = years, width = 13, textvariable = yearvar)
+    comboBOX2.set("Pick a Year")
+    comboBOX2.place(x = 119, y = 350)
+    comboBOX3 = ttk.Combobox(r, values = days, width = 13, textvariable = dayvar)
+    comboBOX3.set("Pick a Day")
+    comboBOX3.place(x = 236, y = 350)
+
+#function that gets rid of custom date choices if default choice is chosen
+def destroyComboBox():
+    global comboBOX1
+    global comboBOX2
+    global comboBOX3
+    global monthvar
+    global yearvar
+    global dayvar
+    comboBOX1.destroy()
+    comboBOX2.destroy()
+    comboBOX3.destroy()
+    monthvar = None
+    yearvar = None
+    dayvar = None
+
+#submit button
+Button(r, text = "Submit for Prediction", bg = "#57d9a3", fg = "#222222", activebackground = "#57d9a3", activeforeground = "#222222", command = lambda: getValues()).place(x = 3, y = 400)
+
+#print the crypto list
+def printCrypto():
+    global stockCryptoLabel
+    if (stockCryptoLabel != None):
+        stockCryptoLabel.destroy()
+        stockCryptoLabel = Label(r, text = cryptoList, bg = "#222222", fg = "#abf5d1")
+        stockCryptoLabel.place(x = 0, y = 40)
     else:
-        try:
-            data = web.DataReader(userChoice, 'yahoo', start, end)
-            return True
-        except:
-            return False
+        stockCryptoLabel = Label(r, text = cryptoList, bg = "#222222", fg = "#abf5d1")
+        stockCryptoLabel.place(x = 0, y = 40)
 
-print("Crypto/Stock Price Prediction")
-print("*DISCLAIMER: Not Intended for financial purposes*")
-print("\n Crypto: 1 \n Stock: 2 \n")
-#function that runs the user inputs
-def runProgram():
-    #menu
-    choice = input("Pick either 1 or 2 for predicting crypto or stock prices: ")
-    while choice != "1" and choice != "2":
-        choice = input("Pick either 1 or 2 for predicting crypto or stock prices: ")
-
-    #menu for crypto
-    if choice == "1":
-        print("\n Bitcoin: BTC \n Cardano: ADA \n Ethereum: ETH \n Ripple: XRP \n Litecoin: LTC \n")
-        crypto_currency = input("Pick a crypto from the menu above or enter in your own cryptocurrency: ")
-
-    #menu for stocks
+#print the stock list
+def printStocks():
+    global stockCryptoLabel
+    if (stockCryptoLabel != None):
+        stockCryptoLabel.destroy()
+        stockCryptoLabel = Label(r, text = stockList, bg = "#222222", fg = "#abf5d1")
+        stockCryptoLabel.place(x = 0, y = 40)
     else:
-        print("\n Amazon: AMZN \n Google: GOOGL \n Apple: AAPL \n Tesla: TSLA \n Microsoft: MSFT \n")
-        crypto_currency = input("Pick a stock from the menu above or enter in your own stock: ")
+        stockCryptoLabel = Label(r, text = stockList, bg = "#222222", fg = "#abf5d1")
+        stockCryptoLabel.place(x = 0, y = 40)
 
-    crypto_currency = crypto_currency.upper()
-    while (testing_valid(choice, crypto_currency)) == False:
-        if choice == "1":
-            crypto_currency = input("Pick a crypto from the menu above or enter in your own cryptocurrency: ")
-        else:
-            crypto_currency = input("Pick a stock from the menu above or enter in your own stock: ")
+#reset the status text for each entry box
+status1 = Label(r, text = "                                                                                                ", bg = "#222222").place(x = 0, y = 220)
+status2 = Label(r, text = "                                                                                                ", bg = "#222222").place(x = 0, y = 280)
 
-    future_day = input("Pick a number of days in the future that you would like to predict the price for (1-180 days): ")
+#status message
+final = Label(r, text = "*May take a couple minutes to get results", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 440)
 
-    while future_day.isdigit() == False or int(future_day) < 0 or int(future_day) > 180:
-        future_day = input("Invalid number of days in the future. Put in a specific number of days: ")
+#function that gets the values the user inputs
+def getValues():
+    global final
+    status1 = Label(r, text="                                                                                                ", bg="#222222").place(x=0, y=220)
+    status2 = Label(r, text="                                                                                                ", bg="#222222").place(x=0, y=280)
+    final = Label(r, text = "                                                                                                          ", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 440)
+    global stockCryptoRadioButton
+    global stockCryptoEntry
+    global numberOfFutureDays
+    global monthvar
+    global yearvar
+    global dayvar
+    global dates
+    global months
+    global monthNum
+    #CRYPTO
+    monthNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    temp1 = False
+    temp2 = False
+    #gets crypto entry and re-prompt the user if needed
+    if stockCryptoRadioButton.get() == 1: #crypto
+        try: #custom
+            #gets the proper month numerical value
+            for i in range(len(months)):
+                if months[i] == monthvar.get():
+                    monthNum = i + 1
+            #print out value
+            try:
+                web.DataReader(f'{stockCryptoEntry.get().upper()}-{"USD"}', 'yahoo', dt.datetime(2016, 1, 1), dt.datetime.now())
+                temp1 = True
+            except:
+                status1 = Label(r, text = "Invalid crypto. Enter in an existing cryptocurrency.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 220)
+                temp1 = False
+            try:
+                int(numberOfFutureDays.get())
+                temp2 = True
+            except:
+                status2 = Label(r, text = "Invalid number of future days. Enter in an integer.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 280)
+                temp2 = False
+            if (temp1 == True and temp2 == True):
+                Label(r, text="Prediction Price of " + stockCryptoEntry.get().upper() + ": " + str(predictCrypto("1", stockCryptoEntry.get().upper(), numberOfFutureDays.get(), start = dt.datetime(int(yearvar.get()), monthNum, int(dayvar.get()))))).place(x=0, y=440)
+        except: #default
+            try:
+                data = web.DataReader(f'{stockCryptoEntry.get().upper()}-{"USD"}', 'yahoo', dt.datetime(2016, 1, 1), dt.datetime.now())
+                temp1 = True
+            except:
+                status1 = Label(r, text = "Invalid crypto. Enter in an existing cryptocurrency.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 220)
+                temp1 = False
+            try:
+                int(numberOfFutureDays.get())
+                temp2 = True
+            except:
+                status2 = Label(r, text = "Invalid number of future days. Enter in an integer.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 280)
+                temp2 = False
+            if (temp1 == True and temp2 == True):
+                Label(r, text="Prediction Price of " + stockCryptoEntry.get().upper() + ": " + str(predictCrypto("1", stockCryptoEntry.get().upper(), numberOfFutureDays.get()))).place(x=0, y=440)
+    #gets stock entry and re-prompt the user if needed
+    if stockCryptoRadioButton.get() == 2: #stock
+        try: #custom
+            #gets the proper month numerical value
+            for i in range(len(months)):
+                if months[i] == monthvar.get():
+                    monthNum = i + 1
+            #print out value
+            try:
+                data = web.DataReader(stockCryptoEntry.get().upper(), 'yahoo', dt.datetime(2016, 1, 1), dt.datetime.now())
+                temp1 = True
+            except:
+                status1 = Label(r, text = "Invalid stock. Enter in an existing stock.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 220)
+                temp1 = False
+            try:
+                numbers = int(numberOfFutureDays.get())
+                temp2 = True
+            except:
+                status2 = Label(r, text = "Invalid number of future days. Enter in an integer.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 280)
+                temp2 = False
+            if (temp1 == True and temp2 == True):
+                Label(r, text="Prediction Price of " + stockCryptoEntry.get().upper() + ": " + str(predictCrypto("2", stockCryptoEntry.get().upper(), numberOfFutureDays.get(), start=dt.datetime(int(yearvar.get()), monthNum, int(dayvar.get()))))).place(x=0, y=440)
+        except: #default
+            try:
+                data = web.DataReader(stockCryptoEntry.get().upper(), 'yahoo', dt.datetime(2016, 1, 1), dt.datetime.now())
+                temp1 = True
+            except:
+                status1 = Label(r, text = "Invalid stock. Enter in an existing stock.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 220)
+                temp1 = False
+            try:
+                numbers = int(numberOfFutureDays.get())
+                temp2 = True
+            except:
+                status2 = Label(r, text = "Invalid number of future days. Enter in an integer.", bg = "#222222", fg = "#d9e2ec").place(x = 0, y = 280)
+                temp2 = False
+            if (temp1 == True and temp2 == True):
+                Label(r, text="Prediction Price of " + stockCryptoEntry.get().upper() + ": " + str(predictCrypto("2", stockCryptoEntry.get().upper(), numberOfFutureDays.get())), bg = "#222222", fg = "#d9e2ec").place(x=0, y=440)
 
-    todays_date = dt.datetime.today()
-    using_year = todays_date.year
-    using_month = todays_date.month
-    using_day = todays_date.day
-    custom = None
-    monthRange = list(range(1, 13))
-    dayRange = list(range(1, 32))
-    if int(future_day) >= 120:
-        using_year = todays_date.year - 3
-        start = dt.datetime(using_year, using_month, using_day)
-        custom = input("Would you like to use a custom start date? Type in either Y or N: ")
-        custom = custom.upper()
-        while custom != "Y" and custom != "N":
-            custom = input("Invalid input. Type in either Y or N: ")
-            custom = custom.upper()
-        if custom == "Y":
-            using_year = input("Enter in a year in its full length. Ex: 2015: ")
-            while using_year.isdigit() == False:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            while len(using_year) != 4:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            using_year = int(using_year)
-
-            using_month = input("Enter in a month number. Ex: January = 1, December = 12: ")
-            while using_month.isdigit() == False:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            while int(using_month) not in monthRange:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            using_month = int(using_month)
-
-            using_day = input("Enter in a day of the month. Ex: 15th = 15: ")
-            while using_day.isdigit() == False:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            while int(using_day) not in dayRange:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            using_day = int(using_day)
-            start = dt.datetime(using_year, using_month, using_day)
-        else:
-            start = dt.datetime(using_year, using_month, using_day)
-
-    elif int(future_day) >= 90:
-        using_year = todays_date.year - 2
-        start = dt.datetime(using_year, using_month, using_day)
-        custom = input("Would you like to use a custom start date? Type in either Y or N: ")
-        custom = custom.upper()
-        while custom != "Y" and custom != "N":
-            custom = input("Invalid input. Type in either Y or N: ")
-            custom = custom.upper()
-        if custom == "Y":
-            using_year = input("Enter in a year in its full length. Ex: 2015: ")
-            while using_year.isdigit() == False:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            while len(using_year) != 4:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            using_year = int(using_year)
-
-            using_month = input("Enter in a month number. Ex: January = 1, December = 12: ")
-            while using_month.isdigit() == False:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            while int(using_month) not in monthRange:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            using_month = int(using_month)
-
-            using_day = input("Enter in a day of the month. Ex: 15th = 15: ")
-            while using_day.isdigit() == False:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            while int(using_day) not in dayRange:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            using_day = int(using_day)
-            start = dt.datetime(using_year, using_month, using_day)
-        else:
-            start = dt.datetime(using_year, using_month, using_day)
-    elif int(future_day) >= 60:
-        using_year = todays_date.year - 2
-        start = dt.datetime(using_year, using_month, using_day)
-        custom = input("Would you like to use a custom start date? Type in either Y or N: ")
-        custom = custom.upper()
-        while custom != "Y" and custom != "N":
-            custom = input("Invalid input. Type in either Y or N: ")
-            custom = custom.upper()
-        if custom == "Y":
-            using_year = input("Enter in a year in its full length. Ex: 2015: ")
-            while using_year.isdigit() == False:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            while len(using_year) != 4:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            using_year = int(using_year)
-
-            using_month = input("Enter in a month number. Ex: January = 1, December = 12: ")
-            while using_month.isdigit() == False:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            while int(using_month) not in monthRange:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            using_month = int(using_month)
-
-            using_day = input("Enter in a day of the month. Ex: 15th = 15: ")
-            while using_day.isdigit() == False:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            while int(using_day) not in dayRange:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            using_day = int(using_day)
-            start = dt.datetime(using_year, using_month, using_day)
-        else:
-            start = dt.datetime(using_year, using_month, using_day)
-    else:
-        using_year = todays_date.year - 1
-        start = dt.datetime(using_year, using_month, using_day)
-        custom = input("Would you like to use a custom start date? Type in either Y or N: ")
-        custom = custom.upper()
-        while custom != "Y" and custom != "N":
-            custom = input("Invalid input. Type in either Y or N: ")
-            custom = custom.upper()
-        if custom == "Y":
-            using_year = input("Enter in a year in its full length. Ex: 2015: ")
-            while using_year.isdigit() == False:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            while len(using_year) != 4:
-                using_year = input("Invalid input. Enter in a 4 digit year. Ex: 2015: ")
-            using_year = int(using_year)
-
-            using_month = input("Enter in a month number. Ex: January = 1, December = 12: ")
-            while using_month.isdigit() == False:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            while int(using_month) not in monthRange:
-                using_month = input("Invalid input. Enter in a numerical month. Ex: January = 1, December = 12: ")
-            using_month = int(using_month)
-
-            using_day = input("Enter in a day of the month. Ex: 15th = 15: ")
-            while using_day.isdigit() == False:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            while int(using_day) not in dayRange:
-                using_day = input("Invalid input. Enter in a numerical day of the month. Ex: 15th = 15: ")
-            using_day = int(using_day)
-            start = dt.datetime(using_year, using_month, using_day)
-        else:
-            start = dt.datetime(using_year, using_month, using_day)
-    predictCrypto(choice, crypto_currency, future_day, start)
-
-runProgram()
+r.mainloop()
